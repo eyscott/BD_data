@@ -1,0 +1,26 @@
+bustools sort -o sorted_control.bus output.bus
+Read in 224235182 BUS records
+bustools whitelist -o control_whitelist sorted_control.bus
+Read in 102086448 BUS records, wrote 232194 barcodes to whitelist with threshold 61
+bustools correct -o corr_control.bus --whitelist control_whitelist sorted_control.bus
+Found 232194 barcodes in the whitelist
+Processed 102086448 BUS records
+In whitelist = 76595078
+Corrected    = 3999451
+Uncorrected  = 21491919
+bustools sort -o corr_sorted_control.bus corr_control.bus
+Read in 80594529 BUS records
+bustools inspect corr_sorted_control.bus
+Read in 78824653 BUS records
+Total number of reads: 182717360
+
+Number of distinct barcodes: 232194
+Median number of reads per barcode: 132.000000
+Mean number of reads per barcode: 786.916802
+
+Number of distinct UMIs: 65536
+Number of distinct barcode-UMI pairs: 59560112
+Median number of UMIs per barcode: 64.000000
+Mean number of UMIs per barcode: 256.510125
+
+Estimated number of new records at 2x sequencing depth: 26326635
