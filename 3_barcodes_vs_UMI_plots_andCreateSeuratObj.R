@@ -46,3 +46,17 @@ plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts")+abline(a=4000, b=
 N_mat_test <- N_mat[ , which(colSums(N_mat) >= 4000) ]
 dim(N_mat_test)
 
+tr2g <- read_tsv("transcripts_to_genes.txt", col_names = c("transcript", "gene", "gene_symbol")) %>%
+  select(-transcript) %>%
+  distinct()
+
+# Convert from Ensembl gene ID to gene symbol
+rownames(control_mat_test) <- tr2g$gene_symbol[match(rownames(control_mat_test), tr2g$gene)]
+rownames(S_mat_test) <- tr2g$gene_symbol[match(rownames(S_mat_test), tr2g$gene)]
+rownames(O_mat_test) <- tr2g$gene_symbol[match(rownames(O_mat_test), tr2g$gene)]
+rownames(N_mat_test) <- tr2g$gene_symbol[match(rownames(N_mat_test), tr2g$gene)]
+
+seu_control <- CreateSeuratObject(control_mat_test, min.cells = 3, project = "Control")
+seu_S <- CreateSeuratObject(S_mat_test, min.cells = 3, project = "S")
+seu_O <- CreateSeuratObject(O_mat_test, min.cells = 3, project = "O")
+seu_N <- CreateSeuratObject(N_mat_test, min.cells = 3, project = "N")
