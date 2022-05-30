@@ -31,3 +31,16 @@ pdf(file='clusterHmap_noMicroG.pdf', width=20, height=10,bg="white")
 DoHeatmap(Justine_sub_no8, features = top10$gene,group.colors =c(wes_palette("Darjeeling2", 9, type = c("continuous"))),angle=0,size = 6,hjust=0.8,group.bar.height=0.02) + 
   scale_fill_viridis_b("Expression",option = "E") + theme(axis.text.y = element_text(size = 6)) + theme(axis.text.x = element_text(vjust=0.5, hjust=1)) 
 dev.off()
+
+#for sources
+Idents(object = Justine_sub_no8) <- Justine_sub_no8@meta.data[["orig.ident"]]
+Justine_sub.markers <- FindAllMarkers(Justine_sub_no8, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+Justine_sub.markers %>%
+  group_by(cluster) %>%
+  top_n(n = 25, wt = avg_log2FC) -> top25
+write.table(top25,"Source_top25_noMG.txt")
+
+pdf(file='clusterHmap_sources_noMG.pdf', width=18, height=10,bg="white")
+DoHeatmap(Justine_sub_no8, features = top25$gene,group.colors =c('Control' = '#B40F20', 'N' = '#E58601','O'='#46ACC8','S'='#E2D200'),angle=0,size = 8,hjust=0.8,group.bar.height=0.04) + 
+  scale_fill_viridis_b("Expression",option = "D") + theme(axis.text.y = element_text(size = 6)) + theme(axis.text.x = element_text(vjust=0.5, hjust=1)) 
+dev.off()
