@@ -9,8 +9,8 @@ The provided scripts go through alignment, demultiplexing and generation of gene
 3.Quality control and preparation of Seurat object \
 4.Analysis of genetables using Seurat \
 5.Analysis after removing cluster identified as microglia \
-6.Trajectory analysis using Slingshot \
+6.Trajectory analysis using Slingshot 
 
 ## Publication
 In Progress:  
-"Astrocyte to oligodendrocyte reprogramming is transcription factor specific". 2022. Submitted
+Justine Bajohr, Erica Y. Scott, Arman Olfat, Kevin Lee, Maria Fahim, Hiba T. Taha, Daniela Lozano, Casasbuenas, Ann Derham, Scott A. Yuzwa & Maryam Faiz. "Astrocyte to oligodendrocyte reprogramming is transcription factor specific". 2022. Submitted
