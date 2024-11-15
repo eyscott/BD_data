@@ -10,7 +10,7 @@ The provided scripts go through alignment, demultiplexing and generation of gene
 5.Analysis after removing cluster identified as microglia \
 6.Trajectory analysis using Slingshot \
 7.Analysis for Sox10 timepoint data in R (Figure 3) \
-8.Cell Oracle analysis (Figure 3) \
+8.Cell Oracle analysis (Figure 3) 
 
 ## Datasets
 Datatable will be made public after publication
