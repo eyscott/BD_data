@@ -16,4 +16,4 @@ The provided scripts go through alignment, demultiplexing and generation of gene
 Datatable will be made public after publication
 
 ### Publication:
-Bajohr, J., Scott, E.Y., Olfat, A., Sadria, M., Lee, K., Fahim, M., Taha, H.T., Lozano Casasbuenas, D., Derham, A., Yuzwa,,S.A, Bader, G.D., & M. Faiz (2024) Direct lineage conversion of postnatal mouse cortical astrocytes to oligodendrocyte lineage cells. eLife. 13:RP98632 https://doi.org/10.7554/eLife.98632.1
+Bajohr, J., Scott, E.Y., Olfat, A., Sadria, M., Lee, K., Fahim, M., Taha, H.T., Lozano Casasbuenas, D., Derham, A., Yuzwa,S.A, Bader, G.D., & M. Faiz (2024) Direct lineage conversion of postnatal mouse cortical astrocytes to oligodendrocyte lineage cells. eLife. 13:RP98632 https://doi.org/10.7554/eLife.98632.1
