@@ -11,10 +11,10 @@ read_count_output <- function(dir, name) {
   rownames(m) <- genes
   return(m)
 }
-control_mat <- read_count_output("/Users/erica_1/Desktop/Faiz/Justine/Justine_2/Control/", name = "control_counts")
-S_mat <- read_count_output("/Users/erica_1/Desktop/Faiz/Justine/Justine_2/S/", name = "S_counts")
-O_mat <- read_count_output("/Users/erica_1/Desktop/Faiz/Justine/Justine_2/O/", name = "O_counts")
-N_mat <- read_count_output("/Users/erica_1/Desktop/Faiz/Justine/Justine_2/N/", name = "N_counts")
+control_mat <- read_count_output("~/Control/", name = "control_counts")
+S_mat <- read_count_output("~/S/", name = "S_counts")
+O_mat <- read_count_output("~/O/", name = "O_counts")
+N_mat <- read_count_output("~/N/", name = "N_counts")
 
 # Filter the matrix
 dim(control_mat)#[1]  36047 232194
