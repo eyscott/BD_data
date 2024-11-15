@@ -1,6 +1,5 @@
-# Astrocyte to oligodendrocyte reprogramming scRNA-seq data (BD Biosciences)
-Use of scRNAseq for transcription factor-mediated astrocyte to oligodendrocyte reprogramming.
-scRNA-seq data generated using BD Rhapsody technology and processed using Kallisto package
+# Analysis of BD Rhapsody derived scRNA-seq data
+These data come from astrocytes in culture (purified via immunopanning) and track the conversion of these astrocytes into various forms of oligodendrocytes after being pushed by the transcription factors Sox10, Olig2, and Nkx6.2
 
 ## General Workflow
 The provided scripts go through alignment, demultiplexing and generation of genecount tables as well as analysis using seurat and slingshot trajectory analysis: \
@@ -10,7 +9,11 @@ The provided scripts go through alignment, demultiplexing and generation of gene
 4.Analysis of genetables using Seurat \
 5.Analysis after removing cluster identified as microglia \
 6.Trajectory analysis using Slingshot 
+7.Analysis for Sox10 timepoint data in R (Figure 3)
+8.Cell Oracle analysis (Figure 3)
 
-## Publication
-In Progress:  
-Justine Bajohr, Erica Y. Scott, Arman Olfat, Kevin Lee, Maria Fahim, Hiba T. Taha, Daniela Lozano, Casasbuenas, Ann Derham, Scott A. Yuzwa & Maryam Faiz. "Astrocyte to oligodendrocyte reprogramming is transcription factor specific". 2022. Submitted
+## Datasets
+Datatable will be made public after publication
+
+### Publication:
+Bajohr, J., Scott, E.Y., Olfat, A., Sadria, M., Lee, K., Fahim, M., Taha, H.T., Lozano Casasbuenas, D., Derham, A., Yuzwa,,S.A, Bader, G.D., & M. Faiz (2024) Direct lineage conversion of postnatal mouse cortical astrocytes to oligodendrocyte lineage cells. eLife. 13:RP98632 https://doi.org/10.7554/eLife.98632.1
