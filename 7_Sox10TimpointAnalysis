@@ -1,0 +1,282 @@
+library(slingshot)
+library(tidyverse)
+library(ggsci)
+library(viridis)
+library(Matrix)
+library(BiocParallel)
+library(scales)
+library(wesanderson)
+library(ranger)
+library(Seurat)
+library(SeuratDisk)
+library(dplyr)
+library(readr)
+
+read_count_output <- function(dir, name) {
+  dir <- normalizePath(dir, mustWork = TRUE)
+  m <- readMM(paste0(dir, "/", name, ".mtx"))
+  m <- Matrix::t(m)
+  m <- as(m, "dgCMatrix")
+  # The matrix read has cells in rows
+  ge <- ".genes.txt"
+  genes <- readLines(file(paste0(dir, "/", name, ge)))
+  barcodes <- readLines(file(paste0(dir, "/", name, ".barcodes.txt")))
+  colnames(m) <- barcodes
+  rownames(m) <- genes
+  return(m)
+}
+
+D0_C_mat <- read_count_output("~/Day0_control/", name = "NT_D8_counts")
+D3_C_mat <- read_count_output("~/Day3_oligoControl/", name = "control_counts")
+D3_S_mat <- read_count_output("~/Day3_Sox10/", name = "SO_counts")
+D8_C_mat <- read_count_output("~/Day8_Control/", name = "C_D8_counts")
+D8_S_mat <- read_count_output("~/Day8_Sox10/", name = "SO_D8_counts")
+D14_C_mat <- read_count_output("~/Day14_Control/", name = "C_D14_counts")
+D14_S_mat <- read_count_output("~/Day14_Sox10/", name = "SO_D14_counts")
+
+umi.per.barcode <- colSums(D0_C_mat)
+x <- sort(umi.per.barcode, decreasing = TRUE)
+plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts") +abline(a=500, b=0, h=5000, v=0,lty=2, col="red") 
+D0_C_mat_test <- D0_C_mat[ , which(colSums(D0_C_mat) >= 5000) ] #therefore UMI count around 3000
+dim(D0_C_mat_test) #35935  2197
+
+umi.per.barcode <- colSums(D3_C_mat)
+x <- sort(umi.per.barcode, decreasing = TRUE)
+plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts") +abline(a=500, b=0, h=3000, v=0,lty=2, col="red") 
+D3_C_mat_test <- D3_C_mat[ , which(colSums(D3_C_mat) >= 3000) ] #therefore UMI count around 3000
+dim(D3_C_mat_test) #35935  1525
+
+umi.per.barcode <- colSums(D3_S_mat)
+x <- sort(umi.per.barcode, decreasing = TRUE)
+plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts") +abline(a=500, b=0, h=4000, v=0,lty=2, col="red") 
+D3_S_mat_test <- D3_S_mat[ , which(colSums(D3_S_mat) >= 4000) ] #therefore UMI count around 3000
+dim(D3_S_mat_test)#35935  1898
+
+umi.per.barcode <- colSums(D8_C_mat)
+x <- sort(umi.per.barcode, decreasing = TRUE)
+plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts") +abline(a=500, b=0, h=4000, v=0,lty=2, col="red") 
+D8_C_mat_test <- D8_C_mat[ , which(colSums(D8_C_mat) >= 4000) ] #therefore UMI count around 3000
+dim(D8_C_mat_test)#35935  1986
+
+umi.per.barcode <- colSums(D8_S_mat)
+x <- sort(umi.per.barcode, decreasing = TRUE)
+plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts") +abline(a=500, b=0, h=4000, v=0,lty=2, col="red") 
+D8_S_mat_test <- D8_S_mat[ , which(colSums(D8_S_mat) >= 4000) ] #therefore UMI count around 3000
+dim(D8_S_mat_test)#35935  2054
+
+umi.per.barcode <- colSums(D14_C_mat)
+x <- sort(umi.per.barcode, decreasing = TRUE)
+plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts") +abline(a=500, b=0, h=4000, v=0,lty=2, col="red") 
+D14_C_mat_test <- D14_C_mat[ , which(colSums(D14_C_mat) >= 4000) ] #therefore UMI count around 3000
+dim(D14_C_mat_test)#35935  1949
+
+umi.per.barcode <- colSums(D14_S_mat)
+x <- sort(umi.per.barcode, decreasing = TRUE)
+plot(x, log="xy",type="l", xlab="Barcodes", ylab="UMI counts") +abline(a=500, b=0, h=4000, v=0,lty=2, col="red") 
+D14_S_mat_test <- D14_S_mat[ , which(colSums(D14_S_mat) >= 4000) ] #therefore UMI count around 3000
+dim(D14_S_mat_test)#35935  1814
+
+
+tr2g <- read_tsv("transcripts_to_genes_v6.txt", col_names = c("transcript", "gene", "gene_symbol")) %>%
+  dplyr::select(-transcript) %>%
+  distinct()
+tr2g_2<- as.data.frame(cbind("gene"=tr2g$gene,"gene_symbol"=make.unique(tr2g$gene_symbol, sep = ".")))
+
+# Convert from Ensembl gene ID to gene symbol
+rownames(D0_C_mat_test) <- tr2g_2$gene_symbol[match(rownames(D0_C_mat_test), tr2g_2$gene)]
+rownames(D3_C_mat_test) <- tr2g_2$gene_symbol[match(rownames(D3_C_mat_test), tr2g_2$gene)]
+rownames(D3_S_mat_test) <- tr2g_2$gene_symbol[match(rownames(D3_S_mat_test), tr2g_2$gene)]
+rownames(D8_C_mat_test) <- tr2g_2$gene_symbol[match(rownames(D8_C_mat_test), tr2g_2$gene)]
+rownames(D8_S_mat_test) <- tr2g_2$gene_symbol[match(rownames(D8_S_mat_test), tr2g_2$gene)]
+rownames(D14_C_mat_test) <- tr2g_2$gene_symbol[match(rownames(D14_C_mat_test), tr2g_2$gene)]
+rownames(D14_S_mat_test) <- tr2g_2$gene_symbol[match(rownames(D14_S_mat_test), tr2g_2$gene)]
+
+#create Seurat object
+seu_D0_C <- CreateSeuratObject(D0_C_mat_test, min.cells = 3, project = "D0_C")
+seu_D3_C <- CreateSeuratObject(D3_C_mat_test, min.cells = 3, project = "D3_C")
+seu_D3_S <- CreateSeuratObject(D3_S_mat_test, min.cells = 3, project = "D3_S")
+seu_D8_C <- CreateSeuratObject(D8_C_mat_test, min.cells = 3, project = "D8_C")
+seu_D8_S <- CreateSeuratObject(D8_S_mat_test, min.cells = 3, project = "D8_S")
+seu_D14_C <- CreateSeuratObject(D14_C_mat_test, min.cells = 3, project = "D14_C")
+seu_D14_S <- CreateSeuratObject(D14_S_mat_test, min.cells = 3, project = "D14_S")
+
+##merge
+Justine_all_SC <- merge(seu_D0_C, y = c(seu_D3_C,seu_D3_S,seu_D8_C,seu_D8_S,seu_D14_C,seu_D14_S), add.cell.ids = c("D0_C","D3_C","D3_S","D8_C","D8_S","D14_C","D14_S"), project = "Justine")
+##QC metrics
+Justine_all_SC[["percent.mt"]] <- PercentageFeatureSet(Justine_all_SC, pattern = "^mt-")
+show_col(wes_palette(n=4, name="Royal1"))
+VlnPlot(Justine_all_SC, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3,cols =wes_palette("Zissou1", 7, type = c("continuous")),
+        pt.size=0.001, group.by ="orig.ident") 
+Justine_all_SC <- NormalizeData(Justine_all_SC) %>% ScaleData()
+dim(Justine_all_SC)
+#[1] 18280 13423
+Justine_all_SC <- FindVariableFeatures(Justine_all_SC, nfeatures = 2500)#50%
+
+set.seed(8)
+Justine_all_SC <- RunPCA(Justine_all_SC, features = VariableFeatures(object = Justine_all_SC))
+Justine_all_SC <- FindNeighbors(Justine_all_SC, dims = 1:10)
+Justine_all_SC <- FindClusters(Justine_all_SC, resolution = 0.5)
+Justine_all_SC <- RunUMAP(Justine_all_SC, reduction = "pca", dims = 1:10)
+Justine_all_SC$orig.ident <- factor(x = Justine_all_SC$orig.ident, levels = c("D0_C","D3_C","D3_S","D8_C","D8_S","D14_C","D14_S"))
+UMAPPlot(object = Justine_all_SC, group.by ="orig.ident",cols = c("D0_C"="#852A30","D3_C"= "#F2300F","D3_S"= "#4A8B6D","D8_C"= "#166058","D8_S"= "#E6BD83","D14_C"="#2E324C" ,"D14_S"="#CAB38C"))
+UMAPPlot(object = Justine_all_SC, group.by ="orig.ident",cols = c("D0_C"="#852A30","D3_C"= "#F2300F","D3_S"= "#4A8B6D","D8_C"= "#166058","D8_S"= "#E6BD83","D14_C"="#2E324C" ,"D14_S"="#CAB38C"),split.by ="orig.ident")
+UMAPPlot(object = Justine_all_SC,cols = c("#3B9AB2", "#EBCC2A", "#6BB1C1", "#F21A00", "#53A5B9", "#BDC367", "#E49100", "#E3B408", "#EB5500", "#8FBBA5", "#E6C019"), label=T)
+
+Justine_all_SC <- JoinLayers(Justine_all_SC)
+
+Idents(object = Justine_all_SC) <- Justine_all_SC@meta.data[["seurat_clusters"]]
+Justine_all_SC.markers <- FindAllMarkers(Justine_all_SC, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+Justine_all_SC.markers  %>%
+  group_by(cluster) %>%
+  top_n(n = 10, wt = avg_log2FC) -> top10
+
+write.table(top10,"top10_pour_chaque_cluster.txt")
+
+DoHeatmap(Justine_all_SC, features = top10$gene,group.colors =c("#8FBBA5", "#53A5B9", "#E6C019", "#BDC367", "#6BB1C1", "#E3B408", "#3B9AB2", "#F21A00",
+                                                                "#E49100", "#EB5500", "#EBCC2A"),angle=0,size = 6,hjust=0.8,group.bar.height=0.02) + 
+  scale_fill_viridis_b("Expression",option = "E") + theme(axis.text.y = element_text(size = 6)) + theme(axis.text.x = element_text(vjust=0.5, hjust=1)) 
+
+FeaturePlot(Justine_all_SC, 
+            reduction = "umap", 
+            features = c('Serpina3n'), 
+            order = TRUE,
+            min.cutoff = 'q10',
+            cols = c("#E7ECF0","#F5C245","#EB6359","#696267","#529085"),
+            label = TRUE, repel=T, ncol = 1)#,interactive = TRUE)
+
+library(scCustomize)
+GOI<-c('Aldh1l1','Tnr','Cntn1','Plppr4','Serpina3n','Nfasc','Pcp4','Chl1','Nrcam','Atp1b2','Ncan', 'Nes','Gfap', "Aldoc", "S100b","Aqp4")
+cols = c("D0_C"="#852A30","D3_C"= "#F2300F","D3_S"= "#4A8B6D","D8_C"= "#166058","D8_S"= "#E6BD83","D14_C"="#2E324C" ,"D14_S"="#CAB38C")
+
+Stacked_VlnPlot(seurat_object = Justine_all_SC, features = GOI, x_lab_rotate = TRUE,
+                colors_use = cols, split.by = "orig.ident")
+prop.table(table(Idents(Justine_all_SC)))
+
+Justine_all_SC_no68<-subset(x = Justine_all_SC, idents = c(6,8), invert=T)
+set.seed(8)
+Justine_all_SC_no68 <- NormalizeData(Justine_all_SC_no68) %>% ScaleData()
+Justine_all_SC_no68 <- RunPCA(Justine_all_SC_no68, features = VariableFeatures(object = Justine_all_SC_no68))
+Justine_all_SC_no68 <- FindNeighbors(Justine_all_SC_no68, dims = 1:10)
+Justine_all_SC_no68 <- FindClusters(Justine_all_SC_no68, resolution = 0.5)
+Justine_all_SC_no68 <- RunUMAP(Justine_all_SC_no68, reduction = "pca", dims = 1:10)
+Justine_all_SC_no68$orig.ident <- factor(x = Justine_all_SC_no68$orig.ident, levels = c("D0_C","D3_C","D3_S","D8_C","D8_S","D14_C","D14_S"))
+UMAPPlot(object = Justine_all_SC_no68, group.by ="orig.ident",cols = c("D0_C"="#852A30","D3_C"= "#F2300F","D3_S"= "#4A8B6D","D8_C"= "#166058","D8_S"= "#E6BD83","D14_C"="#2E324C" ,"D14_S"="#CAB38C"))
+UMAPPlot(object = Justine_all_SC_no68,cols = c("#3B9AB2", "#EBCC2A", "#6BB1C1", "#F21A00", "#53A5B9", "#BDC367", "#E49100", "#E3B408", "#EB5500", "#8FBBA5", "#E6C019"), label=T)
+
+UMAPPlot(object = Justine_all_SC_no68, group.by ="orig.ident",cols = c("D0_C"="#852A30","D3_C"= "#F2300F","D3_S"= "#4A8B6D","D8_C"= "#166058","D8_S"= "#E6BD83","D14_C"="#2E324C" ,"D14_S"="#CAB38C"),split.by ="orig.ident")
+
+GOI<-c('Aldh1l1','Tnr','Cntn1','Plppr4','Serpina3n','Nfasc','Pcp4','Chl1','Nrcam','Atp1b2','Ncan')
+cols = c("D0_C"="#852A30","D3_C"= "#F2300F","D3_S"= "#4A8B6D","D8_C"= "#166058","D8_S"= "#E6BD83","D14_C"="#2E324C" ,"D14_S"="#CAB38C")
+
+Stacked_VlnPlot(seurat_object = Justine_all_SC_no68, features = GOI, x_lab_rotate = TRUE,
+                colors_use = cols, split.by = "orig.ident")
+
+sds <- slingshot(Embeddings(Justine_all_SC_no68, "umap"), clusterLabels = Justine_all_SC_no68$seurat_clusters, 
+                 start.clus = 0, stretch = 0)
+source_col<-c("D0_C"="#852A30","D3_C"= "#F2300F","D3_S"= "#4A8B6D","D8_C"= "#166058","D8_S"= "#E6BD83","D14_C"="#2E324C" ,"D14_S"="#CAB38C")
+cols_O<-source_col[Justine_all_SC_no68$orig.ident]
+plot(sds@elementMetadata@listData[["reducedDim"]], col = cols_O, pch = 16, cex = 0.5,xlab = "UMAP 1", ylab = "UMAP 2")
+lines(SlingshotDataSet(sds), lwd = 2, type = 'lineages', col = 'black')
+
+library(monocle3)
+library(SeuratWrappers)
+library(patchwork)
+
+J.cds <- SeuratWrappers::as.cell_data_set(Justine_all_SC_no68)
+J.cds <- cluster_cells(J.cds, resolution=1e-3)
+J.cds <- learn_graph(J.cds, use_partition = TRUE, verbose = FALSE)
+J.cds <- order_cells(J.cds)
+
+plot_cells(J.cds,
+           color_cells_by = "pseudotime",
+           group_cells_by = "cluster",
+           label_cell_groups = F,
+           label_groups_by_cluster=T,
+           label_leaves=T,
+           label_branch_points=F,
+           label_roots = F,
+           trajectory_graph_color = "black")
+get_citations(J.cds)
+
+##DEGs over trajectory
+J.cds_graph_test_results <- graph_test(J.cds,
+                                       neighbor_graph = "principal_graph",
+                                       cores = 8)
+rowData(J.cds)$gene_short_name <- row.names(rowData(J.cds))
+write.table(J.cds_graph_test_results,"Monocle_DEGs_Fin.txt")
+
+Justine_all_SC_no68 <- as.Seurat(J.cds, assay = NULL)
+
+##save the files
+SaveSeuratRds(Justine_all_SC_no68, file = "Justine_all_SC_no68.Rds")
+SaveH5Seurat(Justine_all_SC_no68, overwrite = TRUE,filename = "JustineSeurat_w_Mono3.h5Seurat")
+
+library(reticulate)
+options(reticulate.conda_binary = "/envs/r-reticulate")
+options(SCP_env_name="~/SCP_env")
+
+renv::activate(project = "~/SCP_env")
+renv::hydrate("SCP")
+library(SCP)
+library(BiocParallel)
+library(Seurat)
+library(SeuratDisk)
+register(MulticoreParam(workers = 8, progressbar = TRUE))
+
+Justine_all_SC_no68 <- readRDS(file = "Justine_all_SC_no68.Rds")
+print(Justine_all_SC_no68)
+
+#convert into anndat object for CellOracle
+Justine_all_SC_no68_adata <- srt_to_adata(Justine_all_SC_no68)
+Justine_all_SC_no68_adata$write_h5ad("Justine_all_SC_no68_wMono3_adata.h5ad")
+###3
+cols<-c("#3B9AB2", "#EBCC2A","#6BB1C1", "#F21A00", "#53A5B9", "#BDC367", "#E49100", "#E3B408", "#EB5500", "#8FBBA5", "#E6C019")
+
+CellDimPlot(
+  srt = Justine_all_SC_no68, group.by = c("seurat_clusters"),
+  reduction = "UMAP", theme_use = "theme_blank",palcolor=cols,label=T,label.fg = "black",
+  label.bg = "white",add_density = T)
+
+CellDimPlot(
+  srt = Justine_all_SC_no68, group.by = c("seurat_clusters","orig.ident"),
+  reduction = "UMAP", theme_use = "theme_blank",show_stat=T
+)
+
+pdf(file="CellDimPie.pdf",width=8, height=6)
+CellDimPlot(
+  srt = Justine_all_SC_no68, group.by = "seurat_clusters", stat.by = "orig.ident",
+  reduction = "UMAP", theme_use = "theme_blank",
+  stat_type = "percent",
+  stat_plot_type = "pie")
+dev.off()
+
+FeatureDimPlot(
+  srt = Justine_all_SC_no68, features = c("Serpina3n", "Plp1", "Mbp", "Sox10"),
+  reduction = "UMAP", theme_use = "theme_blank"
+)
+
+CellDimPlot3D(srt = Justine_all_SC_no68, group.by = "seurat_clusters")
+
+Justine_all_SC_no68 <- RunDEtest(srt = Justine_all_SC_no68, group_by = "seurat_clusters", fc.threshold = 1, only.pos = FALSE) #wilcox
+VolcanoPlot(srt = Justine_all_SC_no68, group_by = "seurat_clusters",ncol=4,DE_threshold = "avg_log2FC > 1 & p_val_adj < 0.01 & p_val_adj > 0",nlabel = 10)
+
+DEGs <- Justine_all_SC_no68@tools$DEtest_seurat_clusters$AllMarkers_wilcox
+DEGs <- DEGs[with(DEGs, avg_log2FC > 1 & p_val_adj < 0.05), ]
+Justine_all_SC_no68 <- AnnotateFeatures(Justine_all_SC_no68, species = "Mus_musculus", db = c("TF", "CSPA"))
+
+ht <- FeatureHeatmap(
+  srt = Justine_all_SC_no68, group.by = "seurat_clusters", features = DEGs$gene, feature_split = DEGs$group1,
+  species = "Mus_musculus", db = c("GO_BP","WikiPathway"), anno_terms = TRUE,
+  feature_annotation = c("TF", "CSPA"), feature_annotation_palcolor = list(c("#A42820", "#273046"), c("#FAD510")),
+  height = 5, width = 4
+)
+
+print(ht$plot)
+
+Justine_all_SC_no68 <- RunEnrichment(
+  srt = Justine_all_SC_no68, group_by = "seurat_clusters", db = "GO_BP", species = "Mus_musculus",
+  DE_threshold = "avg_log2FC > log2(1.5) & p_val_adj < 0.05")
+
+EnrichmentPlot(
+  srt = Justine_all_SC_no68, group_by = "seurat_clusters", 
+  plot_type = "bar")
